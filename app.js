@@ -56,26 +56,40 @@ app.use(function(err, req, res, next) {
 /* OSC Integretaion over UDP
 */
 
-var udpPort = new osc.UDPPort({
+var udpPortSend = new osc.UDPPort({
     localAddress: "0.0.0.0",
     localPort: 57121
 });
 
-udpPort.on("ready", function () {
+udpPortSend.on("ready", function () {
     console.log("Listening for OSC over UDP.");
     udpPort.send({address:"/hello/world", args: 300});
 });
 
-udpPort.on("message", function (oscMessage) {
+udpPortSend.on("message", function (oscMessage) {
     console.log(oscMessage);
 });
 
-udpPort.on("error", function (err) {
+udpPortSend.on("error", function (err) {
     console.log(err);
 });
 
+udpPortSend.open();
 
 
-udpPort.open();
+var udpPortReceive = new osc.UDPPort({
+    localAddress: "0.0.0.0",
+    localPort: 57122
+});
+
+udpPortReceive.on("message", function (oscMessage) {
+    console.log(oscMessage);
+});
+
+udpPortReceive.on("error", function (err) {
+    console.log(err);
+});
+
+udpPortReceive.open();
 
 module.exports = app;
