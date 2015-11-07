@@ -2,9 +2,10 @@
  * HTML5 Audio from Microphone
  */
 
-var isMobile = !!navigator.userAgent.match(/iphone|android/ig) || false;
+var isMobile = !!navigator.userAgent.match(/iphone/ig) || false;
+var isAndroid = !!navigator.userAgent.match(/android/ig) || false;
 
-if(!isMobile){
+if(!isMobile || isAndroid){
 // define audio context
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -54,7 +55,7 @@ guidat;
 var blocks=[];
 var sHost = window.location.origin;
 var socket = io.connect(sHost);
-
+console.log(sHost);
 var materials = (function(){
     var m = {};
     m.basicBlack = new THREE.MeshBasicMaterial( { color: 0x000000 } );
@@ -235,7 +236,7 @@ function animate() {
     animateBlock(time);
     requestAnimationFrame(animate);
 
-        if(!isMobile){
+        if(!isMobile|| isAndroid){
             analyser.getByteTimeDomainData(dataArray);
             // Visualize cubes to audio
             var vx =[];
