@@ -63,7 +63,7 @@ var udpPortSend = new osc.UDPPort({
 
 udpPortSend.on("ready", function () {
     console.log("Listening for OSC over UDP.");
-    udpPortSend.send({address:"/hello/world", args: 300});
+    udpPortSend.send({address:"/hello/world", args: 300}, "127.0.0.1", 57122);
 });
 
 udpPortSend.on("message", function (oscMessage) {
@@ -75,21 +75,5 @@ udpPortSend.on("error", function (err) {
 });
 
 udpPortSend.open();
-
-
-var udpPortReceive = new osc.UDPPort({
-    localAddress: "0.0.0.0",
-    localPort: 57122
-});
-
-udpPortReceive.on("message", function (oscMessage) {
-    console.log(oscMessage);
-});
-
-udpPortReceive.on("error", function (err) {
-    console.log(err);
-});
-
-udpPortReceive.open();
 
 module.exports = app;
