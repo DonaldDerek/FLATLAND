@@ -63,7 +63,7 @@ var udpPortSend = new osc.UDPPort({
 
 udpPortSend.on("ready", function () {
     console.log("Listening for OSC over UDP.");
-    udpPort.send({address:"/hello/world", args: 300});
+    udpPortSend.send({address:"/hello/world", args: 300});
 });
 
 udpPortSend.on("message", function (oscMessage) {
