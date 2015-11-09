@@ -88,7 +88,7 @@ var udpPortSend = new osc.UDPPort({
 
 udpPortSend.on("ready", function () {
     console.log("Listening for OSC over UDP.");
-    udpPortSend.send({address:"/hello/world", args: 300}, "127.0.0.1", 57122);
+    //udpPortSend.send({address:"/height", args: [0, 255, 0] }, "127.0.0.1", 57122);
 });
 
 udpPortSend.on("message", function (oscMessage) {
@@ -109,35 +109,11 @@ udpPortSend.open();
 var control;
 io.on('connection', function (socket) {
 
-
 	//Send update Message
-	socket.on('update', function (data) {
-		io.emit('apply',data);
+	socket.on('P', function (data) {
+		udpPortSend.send({address:"/height", args: data }, "127.0.0.1", 57122);
         //console.log('U: %s', JSON.stringify(data));
 	});
-
-  //Move Player camera
-  socket.on('move', function (data) {
-      io.emit('movePlayer',data);
-      //console.log('MOV: %s', JSON.stringify(data));
-  });
-
-  //Rotate Player camera
-  socket.on('rotate', function (data) {
-      io.emit('rotatePlayer',data);
-      //console.log('ROT: %s', JSON.stringify(data));
-  });
-
-  //Store control config to be sent when remote connects
-  socket.on('controlGUI', function(data){
-      control = data;
-      console.log("Control fncts " + JSON.stringify(control));
-  });
-
-  //Send control config to remote
-  socket.on('config', function(data){
-    io.emit('init', control);
-  });
 });
 
 
