@@ -97,21 +97,26 @@ ShapeDisplay.prototype.getPinHeightForPhysical = function(x, y) {
     return null;
 }
 ShapeDisplay.prototype.getHeightsMsgForPhysical = function(offset_x) {
-    offset_x = offset_x ? offset_x : 0;
-    var msg = "";
-    for (var x = 0; x < this.x_size; x++) {
-        for (var y = 0; y < this.y_size; y++) {
-            var index = this.getIndex(x, y);
-            var h = this.physicalPinHeights[index];
-            var prev_h = this.prevPhysicalPinHeights[index];
-            if (h != prev_h) {
-                xval = x + offset_x;
-                msg += xval + "," + y + "," + h + "-";
-                this.prevPhysicalPinHeights[index] = h;
-            }
-        }
+    var msg = [];
+    for (var i = 0; i < this.pins.length; i++) {
+        msg.push(this.physicalPinHeights[i]);
     }
-    return msg.substring(0, msg.length -1);
+    return msg;
+    // offset_x = offset_x ? offset_x : 0;
+    // var msg = "";
+    // for (var x = 0; x < this.x_size; x++) {
+    //     for (var y = 0; y < this.y_size; y++) {
+    //         var index = this.getIndex(x, y);
+    //         var h = this.physicalPinHeights[index];
+    //         var prev_h = this.prevPhysicalPinHeights[index];
+    //         if (h != prev_h) {
+    //             xval = x + offset_x;
+    //             msg += xval + "," + y + "," + h + "-";
+    //             this.prevPhysicalPinHeights[index] = h;
+    //         }
+    //     }
+    // }
+    // return msg.substring(0, msg.length -1);
 }
 ShapeDisplay.prototype.setPinHeight = function(x, y, h) {
     if (h || (h == 0)) {

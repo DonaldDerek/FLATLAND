@@ -91,23 +91,37 @@ udpPortSend.on("ready", function () {
     //udpPortSend.send({address:"/height", args: [0, 255, 0] }, "127.0.0.1", 57122);
 });
 
-udpPortSend.on("message", function (oscMessage) {
-    console.log(oscMessage);
-});
-
-udpPortSend.on("error", function (err) {
-    console.log(err);
-});
-
-udpPortSend.open();
-
-
-/**
- * Handle Socket.io events
- */
-//Storing control obj here [hack]
 var control;
+var prevMsgString;
 io.on('connection', function (socket) {
+    console.log("NEW SOCKET")
+
+    udpPortSend.on("message", function (oscMessage) {
+        var msgString = JSON.stringify(oscMessage);
+        if (msgString != prevMsgString) {
+            var allPins=[];
+            for(var i=0; i<oscMessage.args.length-1; i+=2 ) {
+                var touchPin={};
+                touchPin.index = oscMessage.args[i];
+                touchPin.indent = oscMessage.args[i+1];
+                allPins.push(touchPin);
+            }
+            console.log(allPins);
+            socket.emit("touch", allPins);
+            prevMsgString = msgString;
+        }
+    });
+
+    udpPortSend.on("error", function (err) {
+        console.log(err);
+    });
+
+    udpPortSend.open();
+
+    /**
+    * Handle Socket.io events
+    */
+    //Storing control obj here [hack]
 
 	//Send update Message
 	socket.on('P', function (data) {

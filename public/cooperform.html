@@ -109,6 +109,11 @@ return function () {
     animate();
 
     socket.on("connect", function(){
+
+    });
+
+    socket.on("touch", function(data){
+        console.log(data);
     });
 
     function init() {
@@ -225,6 +230,7 @@ return function () {
           msg = xForm.getHeightsMsgForPhysical();
           if (msg.length > 0) {
             socket.emit('P', msg);
+            //console.log(msg);
           }
       }
     }
