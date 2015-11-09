@@ -4,7 +4,6 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var osc = require('osc');
 
 var routes = require('./routes/index');
 
@@ -52,28 +51,5 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
-
-/* OSC Integretaion over UDP
-*/
-
-var udpPortSend = new osc.UDPPort({
-    localAddress: "0.0.0.0",
-    localPort: 57121
-});
-
-udpPortSend.on("ready", function () {
-    console.log("Listening for OSC over UDP.");
-    udpPortSend.send({address:"/hello/world", args: 300}, "127.0.0.1", 57122);
-});
-
-udpPortSend.on("message", function (oscMessage) {
-    console.log(oscMessage);
-});
-
-udpPortSend.on("error", function (err) {
-    console.log(err);
-});
-
-udpPortSend.open();
 
 module.exports = app;

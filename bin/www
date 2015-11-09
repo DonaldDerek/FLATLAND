@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('VRS:server');
 var http = require('http');
+var osc = require('osc');
 
 /**
  * Get port from environment and store in Express.
@@ -77,6 +78,29 @@ function onError(error) {
       throw error;
   }
 }
+
+/* OSC Integretaion over UDP
+*/
+var udpPortSend = new osc.UDPPort({
+    localAddress: "0.0.0.0",
+    localPort: 57121
+});
+
+udpPortSend.on("ready", function () {
+    console.log("Listening for OSC over UDP.");
+    udpPortSend.send({address:"/hello/world", args: 300}, "127.0.0.1", 57122);
+});
+
+udpPortSend.on("message", function (oscMessage) {
+    console.log(oscMessage);
+});
+
+udpPortSend.on("error", function (err) {
+    console.log(err);
+});
+
+udpPortSend.open();
+
 
 /**
  * Handle Socket.io events
