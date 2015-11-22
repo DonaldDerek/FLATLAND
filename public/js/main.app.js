@@ -1,12 +1,52 @@
 /*
  * HTML5 Audio from Microphone
  */
-
+var tracks =[];
 var isMobile = !!navigator.userAgent.match(/iphone|android/ig) || false;
 
 if(!isMobile){
 // define audio context
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+var mainVolume = audioCtx.createGain();
+mainVolume.connect(audioCtx.destination);
+
+function summonTrack(filename,x,y,z){
+    var track = {};
+    track.source = audioCtx.createBufferSource();
+    track.volume = audioCtx.createGain();
+    track.filename = filename;
+    track.source.loop = true;
+    track.source.connect(track.volume);
+
+    track.panner = audioCtx.createPanner();
+    track.volume.connect(track.panner);
+    track.panner.connect(mainVolume);
+
+    track.panner.setPosition(x,y,z);
+    tracks.push(track);
+    requestTrack(track);
+    spawnSphere(12, x,y,z);
+}
+function requestTrack(track){
+    // Load a sound file using an ArrayBuffer XMLHttpRequest.
+    var request = new XMLHttpRequest();
+    request.open("GET", track.filename, true);
+    request.responseType = "arraybuffer";
+    request.onload = function(e) {
+
+      // Create a buffer from the response ArrayBuffer.
+      audioCtx.decodeAudioData(this.response, function onSuccess(buffer) {
+        track.buffer = buffer;
+
+        // Make the sound source use the buffer and start playing it.
+        track.source.buffer = track.buffer;
+        track.source.start(audioCtx.currentTime);
+      }, function onFailure() {
+        alert("Decoding the audio buffer failed");
+      });
+    };
+    request.send();
+}
 
 // Webkit/blink browsers need prefix, Safari won't work without window.
 navigator.getUserMedia = navigator.getUserMedia ||
@@ -49,9 +89,11 @@ fps,
 controls,
 player,
 clock,
+hemiLight,
 guidat;
 
 var blocks=[];
+var spheres=[];
 var sHost = window.location.origin;
 var socket = io.connect(sHost);
 
@@ -69,7 +111,7 @@ var geometries = (function(){
     g.scale = 1;
     g.playerGeometry = new THREE.BoxGeometry(4, 4, 4);
     g.basicCube = new THREE.BoxGeometry(g.scale, g.scale, g.scale);
-    g.basicSphere = new THREE.SphereGeometry(g.scale, 6*g.scale, 6*g.scale);
+    g.basicSphere = new THREE.SphereGeometry(g.scale, g.scale, g.scale);
     g.octahedron = new THREE.OctahedronGeometry(g.scale);
     g.ring = new THREE.RingGeometry(g.scale, 5*g.scale, 16*g.scale);
     g.tork = new THREE.TorusKnotGeometry(getRandomInt(3,4)*g.scale, getRandomInt(1,3)*g.scale,100*g.scale,getRandomInt(10,16)*g.scale);
@@ -119,7 +161,7 @@ function init() {
 
     //Playa' please!
     player = new THREE.Mesh( geometries.playerGeometry, materials.basicBlack );
-    player.position.set(70,10,10);
+    player.position.set(0,10,0);
     player.add(camera);
     scene.add(player);
 
@@ -141,12 +183,12 @@ function init() {
     window.addEventListener('deviceorientation', setOrientationControls, true);
 
     //Display fps
-    stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.zIndex = 100;
-    stats.domElement.style.bottom = '0px';
-    stats.domElement.style.right = '0px';
-    container.appendChild( stats.domElement );
+    // stats = new Stats();
+    // stats.domElement.style.position = 'absolute';
+    // stats.domElement.style.zIndex = 100;
+    // stats.domElement.style.bottom = '0px';
+    // stats.domElement.style.right = '0px';
+    // container.appendChild( stats.domElement );
 
     //Worlds elements
     initWorldMap();
@@ -158,7 +200,16 @@ function init() {
         //Add more control variables
     }
 
-    addGUI(guidat);
+    //addGUI(guidat);
+
+    //Track sphere
+    summonTrack('tracks/track1.m4a',0,12,0);
+    summonTrack('tracks/track2.m4a',0,12,127);
+    summonTrack('tracks/track3.m4a',254,12,0);
+    summonTrack('tracks/track4.m4a',254,12,127);
+    summonTrack('tracks/track5.m4a',254,12,254);
+    summonTrack('tracks/track6.m4a',0,12,254);
+
 
     clock = new THREE.Clock();
 
@@ -216,10 +267,10 @@ function initWorldMap(){
     scene.add(floor);
 
     //Cubism Test
-    spawnCube(1, 10, 10, 10);
-    spawnCube(2, 20, 10, 10);
-    spawnCube(4, 10, 20, 10);
-    spawnCube(3, 10, 10, 20);
+    // spawnCube(1, 10, 10, 10);
+    // spawnCube(2, 20, 10, 10);
+    // spawnCube(4, 10, 20, 10);
+    // spawnCube(3, 10, 10, 20);
     for(var i=0; i<500; i++)
         spawnCube(getRandomInt(1,4),getRandomInt(-300,300),getRandomInt(20,300),getRandomInt(-300,300));
 }
@@ -232,7 +283,7 @@ function initWorldMap(){
 function animate() {
     var time = Date.now();
 
-    animateBlock(time);
+    //animateBlock(time);
     requestAnimationFrame(animate);
 
         if(!isMobile){
@@ -247,12 +298,15 @@ function animate() {
                 }
             }
         }
+    audioCtx.listener.setPosition(player.position.x, player.position.y, player.position.z);
+    //track.panner.setPosition(player.position.x, player.position.y, player.position.z);
+
     update(clock.getDelta());
     render(clock.getDelta());
 }
 
 function update(dt) {
-    if(stats) stats.update();
+    //if(stats) stats.update();
     resize();
     camera.updateProjectionMatrix();
     if(controls)
@@ -289,10 +343,19 @@ function visualizeSingleCube(i, v){
 
 function spawnCube(scale, x, y, z){
     geometries.scale = scale;
-    var cube = new THREE.Mesh( geometries.iso, materials.basicBlack );
+    var cube = new THREE.Mesh( geometries.basicCube, materials.basicBlack );
     cube.position.set(x, y, z);
     blocks.push(cube);
     scene.add(cube);
+}
+
+function spawnSphere(scale, x, y, z){
+    var basicSphere = new THREE.SphereGeometry(scale, 42, 42);
+    var material = new THREE.MeshBasicMaterial( { color: 0xfefefe, wireframe:true,transparent: true, opacity: 0.5 } );
+    var s = new THREE.Mesh( basicSphere, material );
+    s.position.set(x, y, z);
+    spheres.push(s);
+    scene.add(s);
 }
 
 function animateBlock(time){
@@ -413,3 +476,122 @@ window.addEventListener('keydown', function(e) {
             break;
         }
 });
+
+/*
+ * Web Midi
+ */
+ var WebMidi = function(midiAccess, portID){
+    var port = portID || "-1047472486";
+    var output = midiAccess.outputs.get(port);
+    this.access = midiAccess || null;
+    this.port = port;
+
+    this.playNote= function(note, decay) {
+        var noteOnMessage = [144, note[0], 127];
+        var noteOffMessage = [128, note[1], 127];
+        output.send( noteOnMessage );
+        console.log("MIDI OUT: " + noteOnMessage);
+        output.send( noteOffMessage, window.performance.now() + decay );
+        console.log("MIDI OUT: " + noteOffMessage);
+    }
+
+    this.send= function(midiMessage, time) {
+        time = time || 0.00;
+        output.send( midiMessage , window.performance.now() + time);
+        console.log("MIDI OUT: " + midiMessage + ' T:' + time);
+    }
+
+    this.listIO = function () {
+        for (var entry of midiAccess.inputs) {
+            var input = entry[1];
+            console.log(input);
+        }
+
+        for (var entry of midiAccess.outputs) {
+            var output = entry[1];
+            console.log(output);
+        }
+    }
+
+    this.setPort = function(port){
+        this.port = port;
+    }
+    this.getPort = function(){
+        console.log(this.port)
+    }
+}
+
+navigator.requestMIDIAccess().then( function(midiAccess){
+    var midi = new WebMidi(midiAccess,"1037096982");
+    initMidi(midi);
+    startLoggingMIDIInput(midiAccess);
+
+}, function(err){
+    console.log( "Failed to get MIDI access - " + msg );
+});
+
+function onMIDIMessage( event ) {
+    var action = event.data[1];
+    var force = event.data[2];
+    var rotX = 0;
+    var rotY = 0;
+    console.log("a: %s, f: %s",action, force);
+    switch (action) {
+        case 10:
+            player.position.set(player.position.x, player.position.y, 2*force);
+            break;
+        case 22:
+            guidat.scale = force;
+            break;
+        case 23:
+            player.position.set(2*force, player.position.y, player.position.z);
+            break;
+        case 24:
+            if(force<=64){
+                rotX++;
+            }
+            else{
+                rotX--;
+            }
+            for (var i=0; i<spheres.length; i++){
+                spheres[i].rotateX(rotX/100);
+            }
+            break;
+        case 25:
+            if(force==1){
+                rotY++;
+            }
+            else{
+                rotY--;
+            }
+            for (var i=0; i<spheres.length; i++){
+                spheres[i].rotateY(rotY/100%360);
+            }
+            break;
+        case 59:
+            for (var i=0; i<tracks.length; i++){
+                tracks[i].pause();
+                tracks[i].currentTime=0;
+            }
+            break;
+
+    }
+}
+
+function logMidiMessage(event){
+    var str = "MIDI message received at timestamp " + event.timestamp + "[" + event.data.length + " bytes]: ";
+    for (var i=0; i<event.data.length; i++) {
+      str += "0x" + event.data[i].toString(16) + " ";
+    }
+    console.log( str );
+}
+function startLoggingMIDIInput( midiAccess, indexOfPort ) {
+  midiAccess.inputs.forEach( function(entry) {
+      entry.onmidimessage = onMIDIMessage;
+  });
+}
+
+function initMidi(midi){
+    midi.listIO();
+    midi.getPort();
+}
